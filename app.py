@@ -4,7 +4,7 @@ import os
 app = Flask(__name__)
 
 
-@app.route('/', methods=["POST", "GET"])
+@app.route('/', methods=['POST', 'GET'])
 def index():
     if request.method == "POST":
         f = request.files['audio_data']
