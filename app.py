@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 from python_speech_features import logfbank
 import librosa
 
@@ -13,19 +12,7 @@ app = Flask(__name__)
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
-    def plot_fbank(fbank):
-        fig, axes = plt.subplots(nrows=1, ncols=2, sharex=False,
-                                 sharey=True, figsize=(20, 5))
-        fig.suptitle('Filter Bank Coefficients', size=16)
-        k = 0
-        for x in range(1):
-            for y in range(2):
-                axes[x, y].set_title(list(fbank.keys())[k])
-                axes[x, y].imshow(list(fbank.values())[k],
-                                  cmap='hot', interpolation='nearest')
-                axes[x, y].get_xaxis().set_visible(False)
-                axes[x, y].get_yaxis().set_visible(False)
-                k += 1
+
 
     def envelope(y, rate, threshold):
         mask = []
