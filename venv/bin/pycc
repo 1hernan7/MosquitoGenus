@@ -1,0 +1,3 @@
+#!/Users/hernan/PycharmProjects/DSModelWeb/venv/bin/python
+from numba.pycc import main
+main()

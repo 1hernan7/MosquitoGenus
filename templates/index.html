@@ -28,5 +28,15 @@
   	<script src="https://cdn.rawgit.com/mattdiamond/Recorderjs/08e7abd9/dist/recorder.js"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='app.js') }}"></script>
 
+    <div class="box-body" align="center">
+        {%if data == "Aedes"%}
+            <img height = "100px" src='static\aedes.png'>
+            <label id="lblgenus"></label>
+        {%elif data == "Anopheles"%}
+            <img height = "100px" src='static\anopheles.png'>
+        {%else%}
+            <img height = "100px" src='static\culex.png'>
+        {%endif%}
+    </div>
   </body>
 </html>
