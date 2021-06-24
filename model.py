@@ -6,7 +6,8 @@ import librosa
 
 import sys
 print('\n'.join(sys.path))
-
+#from memory_profiler import profile
+#@profile
 def plot_fbank(fbank):
     fig, axes = plt.subplots(nrows=1, ncols=2, sharex=False,
                              sharey=True, figsize=(20,5))
@@ -21,6 +22,7 @@ def plot_fbank(fbank):
             axes[x,y].get_yaxis().set_visible(False)
             k += 1
 
+#@profile()
 def envelope(y, rate, threshold):
     mask = []
     y = pd.Series(y).apply(np.abs)
@@ -53,8 +55,8 @@ import statistics
 def median(lst):
     return statistics.median(map(Decimal, lst))
 
-from memory_profiler import profile
-@profile
+
+#@profile
 def learn12(filename):
     import math
     import pandas as pd2
@@ -69,7 +71,7 @@ def learn12(filename):
     Aedes = 0
     Anopheles = 0
     Culex = 0
-    wav_file = filename#dfTest.File[f]
+    wav_file = filename #dfTest.File[f]
     #classification = dfTest.Label[f]
     signal, rate = librosa.load(wav_file, sr=44100)
 
@@ -80,6 +82,11 @@ def learn12(filename):
     bank = logfbank(signal[:rate], rate, nfilt=26, nfft=1103).T
     fbank[0] = bank
     flist = list(fbank[0])
+    print(flist)
+
+    p1 = 0
+    p2 = 0
+    p3 = 0
 
     # getting length of list
     length = len(flist)
@@ -89,16 +96,16 @@ def learn12(filename):
 
     with open(PIK, 'rb') as f:
         var = pickle.load(f)
-        anopheles_min = var[6]
-        anopheles_max = var[7]
+        anopheles_min = var[14] #6
+        anopheles_max = var[15] #7
         anopheles_median = var[5]
         anopheles_mean = var[4]
-        culex_min = var[10]
-        culex_max = var[11]
+        culex_min = var[16] #10
+        culex_max = var[17] #11
         culex_median = var[9]
         culex_mean = var[8]
-        aedes_min = var[2]
-        aedes_max = var[3]
+        aedes_min = var[12] #2
+        aedes_max = var[13] #3
         aedes_median = var[1]
         aedes_mean = var[0]
         aedes_2q = var[12]
@@ -111,6 +118,7 @@ def learn12(filename):
 
     for i in range(length):
 
+        #RANGE SCORE
         RI_anopheles_count = (math.sqrt((Decimal(maximum(flist[i])) - Decimal(anopheles_max[i])) ** 2)) + (
             math.sqrt((Decimal(minimum(flist[i])) - Decimal(anopheles_min[i])) ** 2))
         RI_culex_count = (math.sqrt((Decimal(maximum(flist[i])) - Decimal(culex_max[i])) ** 2)) + (
@@ -118,43 +126,69 @@ def learn12(filename):
         RI_aedes_count = (math.sqrt((Decimal(maximum(flist[i])) - Decimal(aedes_max[i])) ** 2)) + (
             math.sqrt((Decimal(minimum(flist[i])) - Decimal(aedes_min[i])) ** 2))
 
-            # array3 = np.array([RI_anopheles_count,RI_culex_count,RI_aedes_count,0])
-            # order3 = array3.argsort()
-            # ranks3 = order3.argsort()
+        if(maximum(flist[i]) > anopheles_max[i]+ (anopheles_max[i]*0.5)):
+            RI_anopheles_count = RI_anopheles_count + 1
+            p1 = p1 + 1
 
-        RI_anopheles = RI_anopheles_count / (RI_anopheles_count + RI_culex_count + RI_aedes_count)
-        RI_culex = RI_culex_count / (RI_anopheles_count + RI_culex_count + RI_aedes_count)
-        RI_aedes = RI_aedes_count / (RI_anopheles_count + RI_culex_count + RI_aedes_count)
+        if(minimum(flist[i]) < anopheles_min[i]+ (anopheles_min[i]*0.5)):
+            RI_anopheles_count = RI_anopheles_count + 1
+            p1 = p1 + 1
 
+        if(maximum(flist[i]) > culex_max[i]+ (culex_max[i]*0.5)):
+            RI_culex_count = RI_culex_count + 1
+            p2 = p2 + 1
+
+        if(minimum(flist[i]) < culex_min[i]+ (culex_min[i]*0.5)):
+            RI_culex_count = RI_culex_count + 1
+            p2 = p2 + 1
+
+        if(maximum(flist[i]) > aedes_max[i]+ (aedes_max[i]*0.5)):
+            RI_aedes_count = RI_aedes_count + 1
+            p3 = p3 + 1
+
+        if(minimum(flist[i]) < aedes_min[i]+ (aedes_min[i]*0.5)):
+            RI_aedes_count = RI_aedes_count + 1
+            p3 = p3 + 1
+
+        #NORMALIZE RANGE SCORE
+        RI_anopheles = (RI_anopheles_count) / (RI_anopheles_count + RI_culex_count + RI_aedes_count)
+        RI_culex = (RI_culex_count) / (RI_anopheles_count + RI_culex_count + RI_aedes_count)
+        RI_aedes = (RI_aedes_count) / (RI_anopheles_count + RI_culex_count + RI_aedes_count)
+
+        #MEDIAN SCORE
         median_dist_anopheles = (math.sqrt((Decimal(median(flist[i])) - Decimal(anopheles_median[i])) ** 2))
         median_dist_culex = (math.sqrt((Decimal(median(flist[i])) - Decimal(culex_median[i])) ** 2))
         median_dist_aedes = (math.sqrt((Decimal(median(flist[i])) - Decimal(aedes_median[i])) ** 2))
 
-            # array = np.array([median_dist_anopheles,median_dist_culex,median_dist_aedes,0])
-            # order = array.argsort()
-            # ranks = order.argsort()
+        #if (median(flist[i]) > (Decimal(anopheles_median[i]) + Decimal(anopheles_median[i]) * Decimal('0.5'))):
+        #    p1 = p1 + 1
+        #if (median(flist[i]) > (Decimal(culex_median[i]) + Decimal(culex_median[i]) * Decimal('0.5'))):
+        #    p2 = p2 + 1
+        #if (median(flist[i]) > (Decimal(aedes_median[i]) + Decimal(aedes_median[i]) * Decimal('0.5'))):
+        #    p3 = p3 + 1
 
-        median_anopheles = median_dist_anopheles / (median_dist_anopheles + median_dist_culex + median_dist_aedes)
-        median_culex = median_dist_culex / (median_dist_anopheles + median_dist_culex + median_dist_aedes)
-        median_aedes = median_dist_aedes / (median_dist_anopheles + median_dist_culex + median_dist_aedes)
+        #NORMALIZE MEDIAN SCORE
+        median_anopheles = (median_dist_anopheles) / (median_dist_anopheles + median_dist_culex + median_dist_aedes)
+        median_culex = (median_dist_culex) / (median_dist_anopheles + median_dist_culex + median_dist_aedes)
+        median_aedes = (median_dist_aedes) / (median_dist_anopheles + median_dist_culex + median_dist_aedes)
 
+        #MEAN SCORE
         mean_dist_anopheles = (math.sqrt((Decimal(Average(flist[i])) - Decimal(anopheles_mean[i])) ** 2))
         mean_dist_culex = (math.sqrt((Decimal(Average(flist[i])) - Decimal(culex_mean[i])) ** 2))
         mean_dist_aedes = (math.sqrt((Decimal(Average(flist[i])) - Decimal(aedes_mean[i])) ** 2))
 
-            # array2 = np.array([mean_dist_anopheles,mean_dist_culex,mean_dist_aedes,0])
-            # order2 = array2.argsort()
-            # ranks2 = order2.argsort()
-
+        #NORMALIZE MEAN SCORE
         mean_anopheles = mean_dist_anopheles / (mean_dist_anopheles + mean_dist_culex + mean_dist_aedes)
         mean_culex = mean_dist_culex / (mean_dist_anopheles + mean_dist_culex + mean_dist_aedes)
         mean_aedes = mean_dist_aedes / (mean_dist_anopheles + mean_dist_culex + mean_dist_aedes)
 
-            # df3 = pd2.DataFrame(data={'Specie': ['Anopheles', 'Culex', 'Aedes'],'Range': [RI_anopheles_count, RI_culex_count, RI_aedes_count],'Median': [median_anopheles, median_culex, median_aedes],'Mean': [mean_anopheles, mean_culex, mean_aedes], 'Total': [0,0,0]})
+        # df3 = pd2.DataFrame(data={'Specie': ['Anopheles', 'Culex', 'Aedes'],'Range': [RI_anopheles_count, RI_culex_count, RI_aedes_count],'Median': [median_anopheles, median_culex, median_aedes],'Mean': [mean_anopheles, mean_culex, mean_aedes], 'Total': [0,0,0]})
         df3 = pd2.DataFrame(
-            data={'Specie': ['Anopheles', 'Culex', 'Aedes'], 'Range': [RI_anopheles, RI_culex, RI_aedes],
+            data={'Specie': ['Anopheles', 'Culex', 'Aedes'],
+                    'Range': [RI_anopheles, RI_culex, RI_aedes],
                     'Median': [median_anopheles, median_culex, median_aedes],
-                    'Mean': [mean_anopheles, mean_culex, mean_aedes], 'Total': [0, 0, 0]})
+                    'Mean': [mean_anopheles, mean_culex, mean_aedes],
+                    'Total': [0, 0, 0]})
 
         df3['Range'] = df3['Range']
         df3['Median'] = df3['Median']
@@ -163,12 +197,10 @@ def learn12(filename):
         df3['Total'] = (df3['Range'] + df3['Median'] + df3['Mean']) / 2
             # df3['Total'] = ((((df3['Range'].rank(ascending=True))/3) * 100) *  Range_Weight) + ((((df3['Median'].rank(ascending=False))/3) * 100) * Median_Weight) + ((((df3['Mean'].rank(ascending=False))/3) * 100) * Mean_Weight)
             # print(df3)
-        if i == 3 or i == 4:
-            Prediction_Col = df3.loc[df3['Total'].idxmax()]
-        else:
-            Prediction_Col = df3.loc[df3['Total'].idxmin()]
 
-            Prediction = Prediction_Col['Specie']
+        Prediction_Col = df3.loc[df3['Total'].idxmin()]
+        print(i)
+        print(df3)
 
         Aedes = Aedes + df3.iloc[2]['Total']
         Anopheles = Anopheles + df3.iloc[0]['Total']
@@ -182,12 +214,19 @@ def learn12(filename):
         FinalPrediction = 'Culex'
 
     print('Aedes:' + str(Aedes))
+    print('Penalty: ' + str(p3))
     print('Anopheles:' + str(Anopheles))
+    print('Penalty: ' + str(p1))
     print('Culex:' + str(Culex))
+    print('Penalty: ' + str(p2))
     print(FinalPrediction)
 
     return FinalPrediction
 
-instance = 'AES3.wav'
+#instance = '2da9e12a.wav'
+#instance = 'PR1.wav'
+#instance = 'AES3.wav'
+#instance = '01c2f88b.wav'
+instance = '3a9085ca.wav'
 learn12(instance)
 
